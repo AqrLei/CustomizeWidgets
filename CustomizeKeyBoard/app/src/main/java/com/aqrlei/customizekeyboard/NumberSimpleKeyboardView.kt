@@ -7,6 +7,7 @@ import android.graphics.drawable.Drawable
 import android.inputmethodservice.Keyboard
 import android.inputmethodservice.KeyboardView
 import android.util.AttributeSet
+import android.util.Log
 import android.util.TypedValue
 import android.view.View
 
@@ -16,6 +17,7 @@ import android.view.View
  */
 const val KEY_EMPTY = -10
 const val KEY_WRAP = -11
+val TAG = NumberSimpleKeyboardView::class.java.simpleName
 
 class NumberSimpleKeyboardView(context: Context, attrs: AttributeSet?) :
     KeyboardView(context, attrs), KeyboardView.OnKeyboardActionListener {
@@ -113,18 +115,32 @@ class NumberSimpleKeyboardView(context: Context, attrs: AttributeSet?) :
         }
     }
 
-    override fun swipeLeft() {}
+    override fun swipeLeft() {
+        Log.d(TAG, "swipeLeft")
+    }
 
-    override fun swipeRight() {}
+    override fun swipeRight() {
+        Log.d(TAG, "swipeRight")
+    }
 
-    override fun swipeDown() {}
+    override fun swipeDown() {
+        Log.d(TAG, "swipeDown")
+    }
 
-    override fun swipeUp() {}
-    override fun onPress(primaryCode: Int) {}
+    override fun swipeUp() {
+        Log.d(TAG, "swipeUp")
+    }
 
-    override fun onRelease(primaryCode: Int) {}
+    override fun onPress(primaryCode: Int) {
+        Log.d(TAG, "onPress: ${primaryCode.toChar()}")
+    }
+
+    override fun onRelease(primaryCode: Int) {
+        Log.d(TAG, "onRelease: ${primaryCode.toChar()}")
+    }
 
     override fun onKey(primaryCode: Int, keyCodes: IntArray?) {
+        Log.d(TAG, "onKey: ${primaryCode.toChar()}, ${keyCodes?.contentToString()}")
         when (primaryCode) {
             KEY_EMPTY -> return
             KEY_WRAP -> {
@@ -136,7 +152,9 @@ class NumberSimpleKeyboardView(context: Context, attrs: AttributeSet?) :
         }
     }
 
-    override fun onText(text: CharSequence?) {}
+    override fun onText(text: CharSequence?) {
+        Log.d(TAG, "onText: ${text}")
+    }
 
     interface OnKeyListener {
         fun onDelete()

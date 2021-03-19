@@ -50,8 +50,12 @@ class NumberSimpleKeyboardView(context: Context, attrs: AttributeSet?) :
         keyboard?.keys?.takeIf { it.size > 0 }?.let {
             for (key in it) {
                 when (key?.codes?.get(0)) {
-                    KEY_EMPTY, KEY_WRAP -> {
+                    KEY_EMPTY -> {
                         drawKeyBackground(key, canvas, delKeyBackgroundColor)
+                    }
+                    KEY_WRAP -> {
+                        drawKeyBackground(key, canvas, Color.WHITE)
+                        drawKeyIcon(key,canvas, resources.getDrawable(R.drawable.ic_down))
                     }
 
                     Keyboard.KEYCODE_DELETE -> {
@@ -93,7 +97,7 @@ class NumberSimpleKeyboardView(context: Context, attrs: AttributeSet?) :
 
     private fun drawKeyIcon(key: Keyboard.Key, canvas: Canvas, iconDrawable: Drawable?) {
         iconDrawable ?: return
-        if (keyIconRect == null || keyIconRect!!.isEmpty) {
+//        if (keyIconRect == null || keyIconRect!!.isEmpty) {
             val intrinsicWidth = iconDrawable.intrinsicWidth
             val intrinsicHeight = iconDrawable.intrinsicHeight
             var drawWidth = intrinsicWidth
@@ -108,7 +112,7 @@ class NumberSimpleKeyboardView(context: Context, attrs: AttributeSet?) :
             val left = key.x + key.width / 2 - drawWidth / 2
             val top = key.y + key.height / 2 - drawHeight / 2
             keyIconRect = Rect(left, top, left + drawWidth, top + drawHeight)
-        }
+//        }
         if (keyIconRect != null && !keyIconRect!!.isEmpty) {
             iconDrawable.bounds = keyIconRect!!
             iconDrawable.draw(canvas)

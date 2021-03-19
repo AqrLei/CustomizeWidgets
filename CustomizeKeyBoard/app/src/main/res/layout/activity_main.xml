@@ -4,6 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="#FFF7F7F7"
     tools:context=".MainActivity">
 
     <androidx.appcompat.widget.AppCompatEditText
@@ -11,6 +12,7 @@
         android:id="@+id/etInput"
         android:layout_width="match_parent"
         android:layout_height="50dp"
+        android:maxLength="10"
         android:layout_marginTop="20dp"
         app:layout_constraintTop_toTopOf="parent" />
 

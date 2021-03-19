@@ -17,6 +17,7 @@ import android.view.View
  */
 const val KEY_EMPTY = -10
 const val KEY_WRAP = -11
+const val KEY_DIVIDER =  -12
 val TAG = NumberSimpleKeyboardView::class.java.simpleName
 
 class NumberSimpleKeyboardView(context: Context, attrs: AttributeSet?) :
@@ -56,6 +57,10 @@ class NumberSimpleKeyboardView(context: Context, attrs: AttributeSet?) :
                     KEY_WRAP -> {
                         drawKeyBackground(key, canvas, Color.WHITE)
                         drawKeyIcon(key,canvas, resources.getDrawable(R.drawable.ic_down))
+                    }
+
+                    KEY_DIVIDER -> {
+                       drawKeyBackground(key, canvas, Color.parseColor("#ffDADADA"))
                     }
 
                     Keyboard.KEYCODE_DELETE -> {
@@ -148,7 +153,9 @@ class NumberSimpleKeyboardView(context: Context, attrs: AttributeSet?) :
         when (primaryCode) {
             KEY_EMPTY -> return
             KEY_WRAP -> {
-                this.visibility = View.GONE
+                if (listener?.onClose(this) != false) {
+                    this.visibility = View.GONE
+                }
                 listener?.onClose(this)
             }
             Keyboard.KEYCODE_DELETE -> listener?.onDelete()
@@ -163,6 +170,6 @@ class NumberSimpleKeyboardView(context: Context, attrs: AttributeSet?) :
     interface OnKeyListener {
         fun onDelete()
         fun onInput(text: String?)
-        fun onClose(v: View)
+        fun onClose(v: View) : Boolean
     }
 }

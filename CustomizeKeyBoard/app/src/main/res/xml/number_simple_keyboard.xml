@@ -4,6 +4,16 @@
     android:keyWidth="33%p"
     android:verticalGap="1dp">
 
+
+    <Row
+        android:keyHeight="0.1dp"
+        android:verticalGap="0.4dp">
+        <Key
+            android:codes="-12"
+            android:keyWidth="100%p"
+            android:keyLabel="" />
+    </Row>
+
     <Row android:keyHeight="6%p">
         <Key
             android:codes="-11"

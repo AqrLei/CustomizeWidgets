@@ -5,6 +5,7 @@ import android.os.Build
 import android.os.Bundle
 import android.text.InputFilter
 import android.util.Log
+import android.view.MotionEvent
 import android.view.View
 import android.widget.EditText
 import androidx.appcompat.app.AppCompatActivity
@@ -22,6 +23,26 @@ class MainActivity : AppCompatActivity() {
             keyboardView.visibility = View.VISIBLE
             false
         }
+
+        et.setOnFocusChangeListener { v, hasFocus ->
+            Log.d("HASFocus","$hasFocus")
+        }
+
+        window.decorView.setOnTouchListener { v, event ->
+
+            if (event.action == MotionEvent.ACTION_DOWN) {
+                Log.d("TouchDown","etStart(${et.x}), etTop(${et.y}), etEnd(${et.x+et.width}), etBottom(${et.y+et.height}) ")
+                Log.d("TouchDown","keyboardViewStart(${keyboardView.x}), keyboardViewTop(${keyboardView.y}), keyboardViewEnd(${keyboardView.x+keyboardView.width}), etBottom(${keyboardView.y+keyboardView.height}) ")
+                Log.d("TouchDown","downX=${event.x}, downY=${event.y}")
+
+                val isInEt = (event.x in et.x..(et.x+et.width)) &&(event.y in et.y .. (et.y+et.height))
+                val isInKeyboard = (event.x in keyboardView.x..(keyboardView.x+keyboardView.width)) &&(event.y in keyboardView.y .. (keyboardView.y+keyboardView.height))
+                Log.d("TouchDown","isInEt = ${isInEt}, isInKeyboard=${isInKeyboard}")
+            }
+            false
+        }
+
+
 
         keyboardView.listener =
             object : NumberSimpleKeyboardView.OnKeyListener {
@@ -83,12 +104,21 @@ class MainActivity : AppCompatActivity() {
                     }
                 }
 
-                override fun onClose(v: View) {
+                override fun onClose(v: View): Boolean {
 
+                    return true
                 }
             }
     }
 
+    override fun onTouchEvent(event: MotionEvent?): Boolean {
+        return super.onTouchEvent(event)
+
+    }
+
+    /**
+     * 获取设置的最大输入字符数
+     */
     private fun hackLengthFilterMax(lengthFilter: InputFilter.LengthFilter?): Int? {
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             lengthFilter?.max
@@ -100,6 +130,10 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+
+    /**
+     * 阻止软键盘弹出，光标正常显示
+     */
     private fun hackEditText(edit: EditText) {
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {

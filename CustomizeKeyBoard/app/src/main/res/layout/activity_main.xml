@@ -16,6 +16,14 @@
         android:layout_marginTop="20dp"
         app:layout_constraintTop_toTopOf="parent" />
 
+    <androidx.appcompat.widget.AppCompatTextView
+        app:layout_constraintTop_toBottomOf="@+id/etInput"
+        android:text="Hello World!"
+        android:layout_marginTop="50dp"
+        android:textColor="@android:color/holo_green_dark"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"/>
+
     <com.aqrlei.customizekeyboard.NumberSimpleKeyboardView
         android:id="@+id/numberKeyboard"
         android:background="#ffDADADA"

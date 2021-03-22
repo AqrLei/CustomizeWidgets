@@ -7,6 +7,8 @@
     android:background="#FFF7F7F7"
     tools:context=".MainActivity">
 
+
+
     <androidx.appcompat.widget.AppCompatEditText
 
         android:id="@+id/etInput"
@@ -20,6 +22,9 @@
         app:layout_constraintTop_toBottomOf="@+id/etInput"
         android:text="Hello World!"
         android:layout_marginTop="50dp"
+        android:id="@+id/tvHelloWorld"
+        android:padding="12dp"
+        android:background="@android:color/holo_red_dark"
         android:textColor="@android:color/holo_green_dark"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"/>
@@ -30,5 +35,11 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         app:layout_constraintBottom_toBottomOf="parent" />
+
+    <FrameLayout
+        android:id="@+id/flClick"
+        android:background="@android:color/transparent"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"/>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

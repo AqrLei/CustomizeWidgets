@@ -18,12 +18,19 @@ import android.view.View
 const val KEY_EMPTY = -10
 const val KEY_WRAP = -11
 const val KEY_DIVIDER =  -12
+
+interface OnKeyInputListener {
+    fun onDelete()
+    fun onInput(text: String?)
+    fun onClose(v: View) : Boolean
+}
+
 val TAG = NumberSimpleKeyboardView::class.java.simpleName
 
 class NumberSimpleKeyboardView(context: Context, attrs: AttributeSet?) :
     KeyboardView(context, attrs), KeyboardView.OnKeyboardActionListener {
 
-    var listener: OnKeyListener? = null
+    var listener: OnKeyInputListener? = null
 
     private val delKeyBackgroundColor = (0xffDADADA).toInt()
 
@@ -165,11 +172,5 @@ class NumberSimpleKeyboardView(context: Context, attrs: AttributeSet?) :
 
     override fun onText(text: CharSequence?) {
         Log.d(TAG, "onText: ${text}")
-    }
-
-    interface OnKeyListener {
-        fun onDelete()
-        fun onInput(text: String?)
-        fun onClose(v: View) : Boolean
     }
 }

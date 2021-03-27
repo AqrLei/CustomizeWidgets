@@ -1,6 +1,5 @@
 package com.aqrlei.customizekeyboard
 
-import android.annotation.SuppressLint
 import android.os.Bundle
 import android.util.Log
 import android.view.View

@@ -9,7 +9,7 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 
 class MainActivity : AppCompatActivity() {
-    @SuppressLint("ClickableViewAccessibility")
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -17,7 +17,6 @@ class MainActivity : AppCompatActivity() {
         val keyboardView = findViewById<NumberSimpleKeyboardView>(R.id.numberKeyboard)
         val keyboardUtil = KeyBoardUtil()
         keyboardUtil.bind(this, keyboardView, et)
-
 
         findViewById<View>(R.id.tvHelloWorld).setOnClickListener {
             Log.d("TouchDown", "hello world click")

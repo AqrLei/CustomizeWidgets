@@ -28,9 +28,8 @@ class KeyBoardUtil( ){
 
         hackEditText(et)
 
-        et.setOnTouchListener { _, ev ->
+        et.setOnTouchListener { _, _ ->
             keyboardView.visibility = View.VISIBLE
-            Log.d(TAG, "${ev.action}")
             false
         }
 
@@ -45,14 +44,6 @@ class KeyBoardUtil( ){
         keyboardCoverView.setOnTouchListener { _, event ->
 
             if (event.action == MotionEvent.ACTION_DOWN) {
-                Log.d(
-                    "TouchDown",
-                    "etStart(${et.x}), etTop(${et.y}), etEnd(${et.x + et.width}), etBottom(${et.y + et.height}) "
-                )
-                Log.d(
-                    "TouchDown",
-                    "keyboardViewStart(${keyboardView.x}), keyboardViewTop(${keyboardView.y}), keyboardViewEnd(${keyboardView.x + keyboardView.width}), etBottom(${keyboardView.y + keyboardView.height}) "
-                )
                 Log.d("TouchDown", "downX=${event.x}, downY=${event.y}")
 
                 val etRangeX = et.x..(et.x + et.width)
@@ -131,7 +122,7 @@ class KeyBoardUtil( ){
                 }
 
                 override fun onClose(v: View): Boolean {
-
+                    //TODO
                     return true
                 }
             }

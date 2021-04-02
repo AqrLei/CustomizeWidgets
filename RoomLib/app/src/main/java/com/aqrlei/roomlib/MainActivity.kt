@@ -2,6 +2,7 @@ package com.aqrlei.roomlib
 
 import android.os.Bundle
 import android.util.Log
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.Observer
@@ -40,6 +41,19 @@ class MainActivity : AppCompatActivity() {
         binding.btUpdate.setOnClickListener { update() }
         binding.btDelete.setOnClickListener { delete() }
         binding.btUpdateCategory.setOnClickListener { updateCategory() }
+
+        val getContent = registerForActivityResult(ActivityResultContracts.GetContent()) {
+            Log.d("AqrLei","content: ${it}")
+            it?.let { uri ->
+
+            }
+        }
+
+        // MQS7N19530025511
+        binding.btGet.setOnClickListener {
+            getContent.launch("audio/*")
+        }
+
     }
 
     fun insert() {

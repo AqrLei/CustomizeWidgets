@@ -39,6 +39,7 @@ class MainActivity : AppCompatActivity() {
         binding.btInsert.setOnClickListener { insert() }
         binding.btUpdate.setOnClickListener { update() }
         binding.btDelete.setOnClickListener { delete() }
+        binding.btUpdateCategory.setOnClickListener { updateCategory() }
     }
 
     fun insert() {
@@ -67,5 +68,9 @@ class MainActivity : AppCompatActivity() {
                 category = "test"
             )
         )
+    }
+
+    fun updateCategory() {
+        userViewModel.updateCategory(1, "like")
     }
 }

@@ -30,4 +30,8 @@ class UserRepository(private val userDao: UserDao) {
         userDao.update(*user)
     }
 
+    suspend fun updateCategory(id: Int, category: String) {
+        userDao.updateCategory(id, category)
+    }
+
 }

@@ -23,4 +23,7 @@ interface UserDao {
 
     @Update(onConflict = OnConflictStrategy.REPLACE)
     suspend fun update(vararg user: User)
+
+    @Query("UPDATE user SET category = :category WHERE uid = :id")
+    suspend fun updateCategory(id: Int, category: String)
 }

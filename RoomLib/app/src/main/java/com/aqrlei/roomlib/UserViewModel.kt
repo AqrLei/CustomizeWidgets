@@ -19,6 +19,8 @@ class UserViewModel(private val repository: UserRepository) : ViewModel() {
     fun delete(vararg users: User) = viewModelScope.launch { repository.delete(*users) }
 
     fun update(vararg users: User) = viewModelScope.launch { repository.update(*users) }
+
+    fun updateCategory(id: Int, category: String) = viewModelScope.launch { repository.updateCategory(id, category) }
 }
 
 class UserViewModelFactory(private val repository: UserRepository): ViewModelProvider.Factory {

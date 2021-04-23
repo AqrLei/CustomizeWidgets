@@ -1,4 +1,4 @@
-package com.example.storesample
+package com.example.storesample.util
 
 import android.net.Uri
 import androidx.activity.result.ActivityResultCaller
@@ -13,7 +13,7 @@ object DocumentsUtil {
     fun registerOpenDocument(
         activityResultCaller: ActivityResultCaller,
         callback: (documentUriList: Uri?) -> Unit
-    ) = activityResultCaller.registerForActivityResult(ActivityResultContracts.OpenDocument(), ) {
+    ) = activityResultCaller.registerForActivityResult(ActivityResultContracts.OpenDocument()) {
         callback(it)
     }
 

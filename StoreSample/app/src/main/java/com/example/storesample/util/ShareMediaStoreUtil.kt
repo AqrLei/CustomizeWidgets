@@ -1,11 +1,9 @@
-package com.example.storesample
+package com.example.storesample.util
 
 import android.content.ContentResolver
 import android.database.Cursor
 import android.net.Uri
-import android.os.Build
 import android.provider.MediaStore
-import androidx.annotation.RequiresApi
 import androidx.annotation.RequiresPermission
 import androidx.annotation.WorkerThread
 import kotlinx.coroutines.Dispatchers

@@ -1,4 +1,4 @@
-package com.example.storesample
+package com.example.storesample.util
 
 import android.content.Context
 import java.io.File

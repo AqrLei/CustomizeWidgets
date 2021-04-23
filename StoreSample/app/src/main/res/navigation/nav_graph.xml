@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/nav_graph"
+    app:startDestination="@id/mainFragment">
+    <fragment
+        android:id="@+id/mainFragment"
+        android:name="com.example.storesample.MainFragment"
+        android:label="@string/app_name"
+        tools:layout="@layout/fragment_main">
+        <action
+            android:id="@+id/action_mainFragment_to_mediaStoreFragment"
+            app:destination="@id/mediaStoreFragment" />
+
+        <action
+            android:id="@+id/action_mainFragment_to_safFragment"
+            app:destination="@id/safFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/mediaStoreFragment"
+        android:name="com.example.storesample.mediastore.MediaStoreFragment"
+        android:label="MediaStore"
+        tools:layout="@layout/fragment_media_store" />
+
+    <fragment
+        android:id="@+id/safFragment"
+        android:name="com.example.storesample.saf.SAFFragment"
+        android:label="SAF"
+        tools:layout="@layout/fragment_saf" />
+
+</navigation>

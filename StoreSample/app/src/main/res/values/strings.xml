@@ -1,3 +1,7 @@
 <resources>
     <string name="app_name">StoreSample</string>
+
+    <!-- Demo types -->
+    <string name="demo_mediastore">Media Store</string>
+    <string name="demo_saf">Storage Access Framework</string>
 </resources>

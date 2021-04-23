@@ -17,9 +17,7 @@ val diffCallback = object : DiffUtil.ItemCallback<Uri>() {
 
     override fun areContentsTheSame(oldItem: Uri, newItem: Uri): Boolean =
         oldItem == newItem
-
 }
-
 
 class GalleryAdapter(val onClick: (uri: Uri) -> Unit) :
     ListAdapter<Uri, ImageViewHolder>(diffCallback) {

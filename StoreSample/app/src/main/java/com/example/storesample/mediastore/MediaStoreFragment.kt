@@ -1,25 +1,31 @@
 package com.example.storesample.mediastore
 
 import android.Manifest
+import android.app.Activity
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Observer
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.GridLayoutManager
 import com.example.storesample.GalleryAdapter
 import com.example.storesample.databinding.FragmentMediaStoreBinding
+import com.example.storesample.util.ShareMediaStoreUtil
 import com.google.android.material.snackbar.Snackbar
+import kotlinx.coroutines.launch
 
 class MediaStoreFragment : Fragment() {
 
@@ -30,6 +36,14 @@ class MediaStoreFragment : Fragment() {
     private val loadViewModel: MediaStoreLoadViewModel by viewModels()
 
     private val createViewModel: MediaStoreCreateViewModel by viewModels()
+
+    private val actionIntentSender =
+        registerForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) {
+            Log.d("AqrLei", "resultCode: ${it.resultCode}")
+            if (it.resultCode == Activity.RESULT_OK) {
+
+            }
+        }
 
     private val actionRequestPermission =
         registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {
@@ -72,7 +86,22 @@ class MediaStoreFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         val galleryAdapter = GalleryAdapter {
-            Snackbar.make(binding.rvLocal, "uri: $it", Snackbar.LENGTH_SHORT).show()
+            lifecycleScope.launch {
+                val result = ShareMediaStoreUtil.deleteMedia(
+                    requireContext().contentResolver,
+                    it, null, null
+                ) { intentSender ->
+                    actionIntentSender.launch(IntentSenderRequest.Builder(intentSender)
+                        .build())
+                }
+
+                val message =
+                    if (result > 0) "uri: $it delete successful" else "uri: $it delete failure"
+
+                Snackbar.make(binding.rvLocal, message, Snackbar.LENGTH_SHORT).show()
+
+
+            }
         }
 
         binding.rvLocal.also {

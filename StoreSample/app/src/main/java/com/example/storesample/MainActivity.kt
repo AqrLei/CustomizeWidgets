@@ -19,39 +19,6 @@ class MainActivity : AppCompatActivity() {
         val navController = findNavController(R.id.nav_host_fragment)
         appBarConfiguration = AppBarConfiguration(navController.graph)
         setupActionBarWithNavController(navController, appBarConfiguration)
-
-
-//        binding = ActivityMainBinding.inflate(layoutInflater)
-//        setContentView(binding.root)
-
-
-//        val galleryAdapter = GalleryAdapter {
-//            Snackbar.make(binding.rvLocal, "uri: $it", Snackbar.LENGTH_SHORT).show()
-//        }
-
-//        binding.rvLocal.also {
-//            it.layoutManager = GridLayoutManager(this, 2)
-//            it.adapter = galleryAdapter
-//        }
-
-//        binding.tvLoadImage.setOnClickListener {
-//            if (haveStoragePermission()) {
-//                queryImages()
-//            } else {
-//                requestPermission()
-//            }
-//        }
-//        val actionOpenMultiDocuments = DocumentsUtil.registerOpenMultiDocuments(this) {
-//            galleryAdapter.submitList(it)
-//        }
-//        binding.tvPickImage.setOnClickListener {
-//            viewModel.saveRandomImageFromInternet()
-//            actionOpenMultiDocuments.launch(arrayOf("image/*"))
-//        }
-
-//        viewModel.images.observe(this, Observer {
-//            galleryAdapter.submitList(it)
-//        })
     }
 
     override fun onSupportNavigateUp(): Boolean {

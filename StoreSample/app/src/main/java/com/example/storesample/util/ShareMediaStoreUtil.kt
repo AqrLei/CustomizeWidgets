@@ -1,8 +1,12 @@
 package com.example.storesample.util
 
+import android.app.RecoverableSecurityException
 import android.content.ContentResolver
+import android.content.ContentValues
+import android.content.IntentSender
 import android.database.Cursor
 import android.net.Uri
+import android.os.Build
 import android.provider.MediaStore
 import androidx.annotation.RequiresPermission
 import androidx.annotation.WorkerThread
@@ -46,5 +50,93 @@ object ShareMediaStoreUtil {
                 }
         }
         return result
+    }
+
+    suspend fun createImageUri(
+        contentResolver: ContentResolver,
+        mediaFileName: String
+    ): Uri? {
+        val imageCollection = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            MediaStore.Images.Media.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY)
+        } else {
+            MediaStore.Images.Media.EXTERNAL_CONTENT_URI
+        }
+
+        return createMediaUri(
+            contentResolver,
+            imageCollection,
+            MediaStore.Images.Media.DISPLAY_NAME,
+            mediaFileName
+        )
+    }
+
+    suspend fun createAudioUri(
+        contentResolver: ContentResolver,
+        mediaFileName: String
+    ): Uri? {
+        val audioCollection = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            MediaStore.Audio.Media.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY)
+        } else {
+            MediaStore.Audio.Media.EXTERNAL_CONTENT_URI
+        }
+
+        return createMediaUri(
+            contentResolver,
+            audioCollection,
+            MediaStore.Audio.Media.DISPLAY_NAME,
+            mediaFileName
+        )
+    }
+
+    suspend fun createVideoUri(
+        contentResolver: ContentResolver,
+        mediaFileName: String
+    ): Uri? {
+        val videoCollection = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            MediaStore.Video.Media.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY)
+        } else {
+            MediaStore.Video.Media.EXTERNAL_CONTENT_URI
+        }
+
+        return createMediaUri(
+            contentResolver,
+            videoCollection,
+            MediaStore.Video.Media.DISPLAY_NAME,
+            mediaFileName
+        )
+    }
+
+    private suspend fun createMediaUri(
+        contentResolver: ContentResolver,
+        @RequiresPermission.Write mediaCollection: Uri,
+        mediaFileNameKey: String,
+        mediaFileName: String
+    ): Uri? {
+        return withContext(Dispatchers.IO) {
+            val newMedia = ContentValues().apply {
+                //TODO is_pending
+                put(mediaFileNameKey, mediaFileName)
+            }
+            return@withContext contentResolver.insert(mediaCollection, newMedia)
+        }
+    }
+
+    suspend fun deleteMedia(
+        contentResolver: ContentResolver,
+        @RequiresPermission.Write mediaUri: Uri,
+        selection: String?,
+        selectionArgs: Array<String>?,
+        senderCallback: (intentSender: IntentSender) -> Unit
+    ): Int = withContext(Dispatchers.IO) {
+        try {
+            contentResolver.delete(mediaUri, selection, selectionArgs)
+        }catch (e: SecurityException){
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q){
+                (e as? RecoverableSecurityException)?.userAction?.actionIntent?.intentSender?.let {
+                    senderCallback(it)
+                }
+            }
+            -1
+        }
     }
 }

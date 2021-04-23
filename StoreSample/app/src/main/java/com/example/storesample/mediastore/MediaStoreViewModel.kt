@@ -60,22 +60,10 @@ class MediaStoreCreateViewModel(application: Application) : AndroidViewModel(app
     }
 
     suspend fun createPhotoUri(): Uri? {
-        val imageCollection = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            MediaStore.Images.Media.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY)
-        } else {
-            MediaStore.Images.Media.EXTERNAL_CONTENT_URI
-        }
-
-        return withContext(Dispatchers.IO) {
-
-            val newImage = ContentValues().apply {
-                put(MediaStore.Images.Media.DISPLAY_NAME, generateFileName("jpg"))
-            }
-            return@withContext getApplication<Application>().contentResolver.insert(
-                imageCollection,
-                newImage
-            )
-        }
+        return ShareMediaStoreUtil.createImageUri(
+            getApplication<Application>().contentResolver,
+            generateFileName("jpg")
+        )
     }
 
     private fun generateFileName(extension: String): String {

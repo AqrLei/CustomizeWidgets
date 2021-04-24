@@ -25,6 +25,7 @@ class SAFFragment : Fragment() {
     }
 
     private val actionOpenDocument = DocumentsUtil.registerOpenDocument(this) {
+
         galleryAdapter.submitList(if (it == null) null else mutableListOf(it))
     }
 

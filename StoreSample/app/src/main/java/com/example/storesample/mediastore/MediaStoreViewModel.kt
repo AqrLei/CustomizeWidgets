@@ -4,6 +4,7 @@ import android.app.Application
 import android.content.ContentResolver
 import android.content.ContentUris
 import android.content.ContentValues
+import android.content.IntentSender
 import android.database.ContentObserver
 import android.database.Cursor
 import android.net.Uri
@@ -73,24 +74,25 @@ class MediaStoreCreateViewModel(application: Application) : AndroidViewModel(app
 
 class MediaStoreLoadViewModel(application: Application) : AndroidViewModel(application) {
 
-    private val imageContentObserver: ContentObserver =
+    init {
         getApplication<Application>().contentResolver.registerObserver(
             MediaStore.Images.Media.EXTERNAL_CONTENT_URI
         ) {
             Log.d("AqrLei-Image", "observer changed")
             loadImages()
         }
-    private val _images = MutableLiveData<List<Uri>>()
-    val images: LiveData<List<Uri>> get() = _images
+    }
 
+    private val _images = MutableLiveData<List<MediaData>>()
+    val images: LiveData<List<MediaData>> get() = _images
 
     private var audioContentObserver: ContentObserver? = null
-    private val _audios = MutableLiveData<List<Uri>>()
-    val audios: LiveData<List<Uri>> get() = _audios
+    private val _audios = MutableLiveData<List<MediaData>>()
+    val audios: LiveData<List<MediaData>> get() = _audios
 
     private var videoContentObserver: ContentObserver? = null
-    private val _videos = MutableLiveData<List<Uri>>()
-    val videos: LiveData<List<Uri>> get() = _videos
+    private val _videos = MutableLiveData<List<MediaData>>()
+    val videos: LiveData<List<MediaData>> get() = _videos
 
 
     fun loadImages() {
@@ -145,8 +147,8 @@ class MediaStoreLoadViewModel(application: Application) : AndroidViewModel(appli
         }
     }
 
-    private fun queryImages(cursor: Cursor): List<Uri> {
-        val tempImageUrlList = ArrayList<Uri>()
+    private fun queryImages(cursor: Cursor): List<MediaData> {
+        val tempImageMediaList = ArrayList<MediaData>()
 
         var imageIndex = 0
         while (cursor.moveToNext()) {
@@ -157,22 +159,25 @@ class MediaStoreLoadViewModel(application: Application) : AndroidViewModel(appli
 
             try {
                 val idColumn = cursor.getColumnIndexOrThrow(MediaStore.Images.Media._ID)
+                val displayNameColumn =
+                    cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DISPLAY_NAME)
                 val id = cursor.getLong(idColumn)
+                val name = cursor.getString(displayNameColumn)
                 val contentUri = ContentUris.withAppendedId(
                     MediaStore.Images.Media.EXTERNAL_CONTENT_URI, id
                 )
-                tempImageUrlList += contentUri
+                tempImageMediaList += MediaData(id, contentUri, name ?: "--")
             } catch (e: IllegalArgumentException) {
                 // ignore
             }
             imageIndex++
         }
 
-        return tempImageUrlList
+        return tempImageMediaList
     }
 
-    private fun queryAudios(cursor: Cursor): List<Uri> {
-        val tempAudioUrlList = ArrayList<Uri>()
+    private fun queryAudios(cursor: Cursor): List<MediaData> {
+        val tempAudioMediaList = ArrayList<MediaData>()
         var audioIndex = 0
         while (cursor.moveToNext()) {
             val columnCount = cursor.columnCount
@@ -183,11 +188,14 @@ class MediaStoreLoadViewModel(application: Application) : AndroidViewModel(appli
 
             try {
                 val idColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media._ID)
+                val displayNameColumn =
+                    cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DISPLAY_NAME)
                 val id = cursor.getLong(idColumn)
+                val name = cursor.getStringOrNull(displayNameColumn)
                 val contentUri = ContentUris.withAppendedId(
                     MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, id
                 )
-                tempAudioUrlList += contentUri
+                tempAudioMediaList += MediaData(id, contentUri, name ?: "--")
             } catch (e: IllegalArgumentException) {
                 //ignore
             }
@@ -195,11 +203,11 @@ class MediaStoreLoadViewModel(application: Application) : AndroidViewModel(appli
             audioIndex++
         }
 
-        return tempAudioUrlList
+        return tempAudioMediaList
     }
 
-    private fun queryVideos(cursor: Cursor): List<Uri> {
-        val tempVideoUrlList = ArrayList<Uri>()
+    private fun queryVideos(cursor: Cursor): List<MediaData> {
+        val tempVideoMediaList = ArrayList<MediaData>()
         var audioIndex = 0
         while (cursor.moveToNext()) {
             val columnCount = cursor.columnCount
@@ -210,11 +218,14 @@ class MediaStoreLoadViewModel(application: Application) : AndroidViewModel(appli
 
             try {
                 val idColumn = cursor.getColumnIndexOrThrow(MediaStore.Video.Media._ID)
+                val displayNameColumn =
+                    cursor.getColumnIndexOrThrow(MediaStore.Video.Media.DISPLAY_NAME)
                 val id = cursor.getLong(idColumn)
+                val name = cursor.getStringOrNull(displayNameColumn)
                 val contentUri = ContentUris.withAppendedId(
                     MediaStore.Video.Media.EXTERNAL_CONTENT_URI, id
                 )
-                tempVideoUrlList += contentUri
+                tempVideoMediaList += MediaData(id, contentUri, name ?: "--")
             } catch (e: IllegalArgumentException) {
                 //ignore
             }
@@ -222,7 +233,7 @@ class MediaStoreLoadViewModel(application: Application) : AndroidViewModel(appli
             audioIndex++
         }
 
-        return tempVideoUrlList
+        return tempVideoMediaList
     }
 
     private fun log(mediaType: String, index: Int, i: Int, cursor: Cursor) {
@@ -258,10 +269,35 @@ class MediaStoreLoadViewModel(application: Application) : AndroidViewModel(appli
                 observer(selfChange)
             }
         }
-
         registerContentObserver(uri, true, contentObserver)
         return contentObserver
     }
+}
 
+class MediaStoreDeleteViewModel(application: Application) : AndroidViewModel(application) {
+
+    private var pendingDeleteImage: MediaData? = null
+    private val _permissionNeededForDelete = MutableLiveData<IntentSender?>()
+    val permissionNeededForDelete: LiveData<IntentSender?> get() = _permissionNeededForDelete
+    fun deleteImage(image: MediaData) {
+        viewModelScope.launch {
+            performDeleteImage(image)
+        }
+    }
+
+    fun deletePendingImage() {
+        pendingDeleteImage?.let { image ->
+            pendingDeleteImage = null
+            deleteImage(image)
+        }
+    }
+
+    private suspend fun performDeleteImage(image: MediaData) =
+        getApplication<Application>().contentResolver.let {
+            ShareMediaStoreUtil.deleteImageMedia(it, image.contentUri, image.id, { intentSender ->
+                pendingDeleteImage = image
+                _permissionNeededForDelete.postValue(intentSender)
+            })
+        }
 
 }

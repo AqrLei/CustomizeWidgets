@@ -121,20 +121,54 @@ object ShareMediaStoreUtil {
         }
     }
 
+    suspend fun deleteImageMedia(
+        contentResolver: ContentResolver,
+        @RequiresPermission.Write mediaUri: Uri,
+        mediaId: Long,
+        senderCallback: (intentSender: IntentSender) -> Unit,
+        errorCallback: ((e: Exception) -> Unit)? = null
+    ) {
+        val selection = "${MediaStore.Images.Media._ID} = ?"
+        val selectionArgs = arrayOf(mediaId.toString())
+        deleteMedia(contentResolver, mediaUri, selection, selectionArgs, senderCallback)
+    }
+
     suspend fun deleteMedia(
         contentResolver: ContentResolver,
         @RequiresPermission.Write mediaUri: Uri,
         selection: String?,
         selectionArgs: Array<String>?,
-        senderCallback: (intentSender: IntentSender) -> Unit
+        senderCallback: (intentSender: IntentSender) -> Unit,
+        errorCallback: ((e: Exception) -> Unit)? = null
     ): Int = withContext(Dispatchers.IO) {
         try {
             contentResolver.delete(mediaUri, selection, selectionArgs)
-        }catch (e: SecurityException){
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q){
+        } catch (e: SecurityException) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                 (e as? RecoverableSecurityException)?.userAction?.actionIntent?.intentSender?.let {
                     senderCallback(it)
-                }
+                } ?: errorCallback?.invoke(e)
+            }
+            -1
+        }
+    }
+
+    suspend fun updateMedia(
+        contentResolver: ContentResolver,
+        @RequiresPermission.Write mediaUri: Uri,
+        selection: String?,
+        selectionArgs: Array<String>?,
+        updateContentValues: ContentValues,
+        senderCallback: (intentSender: IntentSender) -> Unit,
+        errorCallback: ((e: Exception) -> Unit)? = null
+    ): Int = withContext(Dispatchers.IO) {
+        try {
+            contentResolver.update(mediaUri, updateContentValues, selection, selectionArgs)
+        } catch (e: SecurityException) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                (e as? RecoverableSecurityException)?.userAction?.actionIntent?.intentSender?.let {
+                    senderCallback(it)
+                } ?: errorCallback?.invoke(e)
             }
             -1
         }

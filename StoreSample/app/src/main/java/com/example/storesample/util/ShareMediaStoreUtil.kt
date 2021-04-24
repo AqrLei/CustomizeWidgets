@@ -5,9 +5,13 @@ import android.content.ContentResolver
 import android.content.ContentValues
 import android.content.IntentSender
 import android.database.Cursor
+import android.database.DatabaseUtils
 import android.net.Uri
 import android.os.Build
+import android.os.Bundle
+import android.os.CancellationSignal
 import android.provider.MediaStore
+import androidx.annotation.RequiresApi
 import androidx.annotation.RequiresPermission
 import androidx.annotation.WorkerThread
 import kotlinx.coroutines.Dispatchers
@@ -21,36 +25,116 @@ import kotlinx.coroutines.withContext
 object ShareMediaStoreUtil {
 
     @WorkerThread
-    suspend fun <T> queryImages(resolver: ContentResolver, block: (cursor: Cursor) -> T): T? {
-        return queryMedia(resolver, MediaStore.Images.Media.EXTERNAL_CONTENT_URI, block)
+    suspend fun <T> queryAllImages(resolver: ContentResolver, block: (cursor: Cursor) -> T): T? {
+        return queryMedia(
+            resolver,
+            MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+            null,
+            null,
+            null,
+            "${MediaStore.Images.Media.DISPLAY_NAME} ASC ",
+            "5 OFFSET 2",
+            null,
+            block
+        )
     }
 
     @WorkerThread
-    suspend fun <T> queryVideo(resolver: ContentResolver, block: (cursor: Cursor) -> T): T? {
-        return queryMedia(resolver, MediaStore.Video.Media.EXTERNAL_CONTENT_URI, block)
+    suspend fun <T> queryAllVideo(resolver: ContentResolver, block: (cursor: Cursor) -> T): T? {
+        return queryMedia(
+            resolver,
+            MediaStore.Video.Media.EXTERNAL_CONTENT_URI,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            block
+        )
     }
 
 
     @WorkerThread
-    suspend fun <T> queryAudio(resolver: ContentResolver, block: (cursor: Cursor) -> T): T? {
-        return queryMedia(resolver, MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, block)
+    suspend fun <T> queryAllAudio(resolver: ContentResolver, block: (cursor: Cursor) -> T): T? {
+        return queryMedia(
+            resolver,
+            MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            block
+        )
     }
 
     @WorkerThread
-    private suspend fun <T> queryMedia(
+    suspend fun <T> queryMedia(
         resolver: ContentResolver,
         @RequiresPermission.Read uri: Uri,
+        projection: Array<out String>?,
+        selection: String?,
+        selectionArgs: Array<out String>?,
+        sortOrder: String?,
+        limitOrder: String?,
+        cancellationSignal: CancellationSignal?,
         block: (cursor: Cursor) -> T
     ): T? {
         var result: T? = null
         withContext(Dispatchers.IO) {
-            resolver.query(uri, null, null, null, null, null)
-                ?.use {
+
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
+                resolver.query(
+                    uri,
+                    projection,
+                    selection,
+                    selectionArgs,
+                    "$sortOrder $limitOrder",
+                    cancellationSignal
+                )?.use {
                     result = block(it)
                 }
+            } else {
+                val bundle = createSqlQueryBundle(selection, selectionArgs, sortOrder, limitOrder)
+                resolver.query(uri, projection, bundle, cancellationSignal)?.use {
+                    result = block(it)
+                }
+            }
+
         }
         return result
     }
+
+    @RequiresApi(Build.VERSION_CODES.O)
+    fun createSqlQueryBundle(
+        selection: String?,
+        selectionArgs: Array<out String>?,
+        sortOrder: String?,
+        limitOrder: String?
+    ): Bundle? {
+        if (selection == null && selectionArgs == null && sortOrder == null && limitOrder == null) {
+            return null
+        }
+        val queryArgs = Bundle()
+        if (selection != null) {
+            queryArgs.putString(ContentResolver.QUERY_ARG_SQL_SELECTION, selection)
+        }
+        if (selectionArgs != null) {
+            queryArgs.putStringArray(ContentResolver.QUERY_ARG_SQL_SELECTION_ARGS, selectionArgs)
+        }
+        if (sortOrder != null) {
+            queryArgs.putString(ContentResolver.QUERY_ARG_SQL_SORT_ORDER, sortOrder)
+        }
+
+        ContentResolver.QUERY_ARG_SQL_HAVING
+        if (limitOrder != null) {
+            queryArgs.putString(ContentResolver.QUERY_ARG_SQL_LIMIT, limitOrder)
+        }
+        return queryArgs
+    }
+
 
     suspend fun createImageUri(
         contentResolver: ContentResolver,
@@ -130,7 +214,14 @@ object ShareMediaStoreUtil {
     ) {
         val selection = "${MediaStore.Images.Media._ID} = ?"
         val selectionArgs = arrayOf(mediaId.toString())
-        deleteMedia(contentResolver, mediaUri, selection, selectionArgs, senderCallback)
+        deleteMedia(
+            contentResolver,
+            mediaUri,
+            selection,
+            selectionArgs,
+            senderCallback,
+            errorCallback
+        )
     }
 
     suspend fun deleteMedia(
@@ -152,6 +243,7 @@ object ShareMediaStoreUtil {
             -1
         }
     }
+
 
     suspend fun updateMedia(
         contentResolver: ContentResolver,

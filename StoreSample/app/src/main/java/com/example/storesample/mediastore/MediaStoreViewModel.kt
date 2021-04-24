@@ -3,12 +3,10 @@ package com.example.storesample.mediastore
 import android.app.Application
 import android.content.ContentResolver
 import android.content.ContentUris
-import android.content.ContentValues
 import android.content.IntentSender
 import android.database.ContentObserver
 import android.database.Cursor
 import android.net.Uri
-import android.os.Build
 import android.os.Handler
 import android.os.Looper
 import android.provider.MediaStore
@@ -97,7 +95,8 @@ class MediaStoreLoadViewModel(application: Application) : AndroidViewModel(appli
 
     fun loadImages() {
         viewModelScope.launch {
-            val imageList = ShareMediaStoreUtil.queryImages(
+
+            val imageList = ShareMediaStoreUtil.queryAllImages(
                 getApplication<Application>().contentResolver,
                 ::queryImages
             )
@@ -107,7 +106,7 @@ class MediaStoreLoadViewModel(application: Application) : AndroidViewModel(appli
 
     fun loadAudio() {
         viewModelScope.launch {
-            val audioList = ShareMediaStoreUtil.queryAudio(
+            val audioList = ShareMediaStoreUtil.queryAllAudio(
                 getApplication<Application>().contentResolver,
                 ::queryAudios
             )
@@ -129,7 +128,7 @@ class MediaStoreLoadViewModel(application: Application) : AndroidViewModel(appli
     fun loadVideo() {
 
         viewModelScope.launch {
-            val videoList = ShareMediaStoreUtil.queryVideo(
+            val videoList = ShareMediaStoreUtil.queryAllVideo(
                 getApplication<Application>().contentResolver,
                 ::queryVideos
             )

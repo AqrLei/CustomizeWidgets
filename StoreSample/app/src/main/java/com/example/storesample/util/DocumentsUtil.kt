@@ -6,13 +6,17 @@ import androidx.activity.result.contract.ActivityResultContracts
 
 object DocumentsUtil {
 
-    fun createDocument() {
-
-    }
+    fun createDocument(
+        activityResultCaller: ActivityResultCaller,
+        callback: (documentUri: Uri?) -> Unit
+    ) =
+        activityResultCaller.registerForActivityResult(ActivityResultContracts.CreateDocument()) {
+            callback(it)
+        }
 
     fun registerOpenDocument(
         activityResultCaller: ActivityResultCaller,
-        callback: (documentUriList: Uri?) -> Unit
+        callback: (documentUri: Uri?) -> Unit
     ) = activityResultCaller.registerForActivityResult(ActivityResultContracts.OpenDocument()) {
         callback(it)
     }

@@ -1,9 +1,11 @@
 package com.example.storesample.saf
 
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.documentfile.provider.DocumentFile
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.GridLayoutManager
 import com.example.storesample.util.DocumentsUtil
@@ -21,11 +23,13 @@ class SAFFragment : Fragment() {
     }
 
     private val actionOpenMultiDocuments = DocumentsUtil.registerOpenMultiDocuments(this) {
+
+        Log.d("AqrLei-Document", "uriList:${it.toTypedArray()}")
         galleryAdapter.submitList(it.toMutableList())
     }
 
     private val actionOpenDocument = DocumentsUtil.registerOpenDocument(this) {
-
+        Log.d("AqrLei-Document", "uri:$it")
         galleryAdapter.submitList(if (it == null) null else mutableListOf(it))
     }
 

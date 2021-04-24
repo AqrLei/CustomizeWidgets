@@ -38,7 +38,6 @@ class MediaAdapter(val onClick: (mediaData: MediaData) -> Unit) :
     override fun onBindViewHolder(holder: MediaViewHolder, position: Int) {
         val mediaItem = getItem(position)
         holder.binding.root.tag  = mediaItem
-
         holder.binding.iv.load(mediaItem.contentUri)
         holder.binding.tvName.text = mediaItem.displayName
     }

@@ -7,6 +7,7 @@ import android.content.IntentSender
 import android.database.ContentObserver
 import android.database.Cursor
 import android.net.Uri
+import android.os.Environment
 import android.os.Handler
 import android.os.Looper
 import android.provider.MediaStore
@@ -24,6 +25,11 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import java.io.File
+import java.io.OutputStream
+import java.text.SimpleDateFormat
+import java.util.*
+import kotlin.collections.ArrayList
 
 private const val RANDOM_IMAGE_URL = "https://source.unsplash.com/random/500x500"
 
@@ -34,39 +40,43 @@ class MediaStoreCreateViewModel(application: Application) : AndroidViewModel(app
 
     fun saveRandomImageFromInternet() {
         if (saveInPending) return
-
         saveInPending = true
         viewModelScope.launch {
-            val imageUri = createPhotoUri()
             val request = Request.Builder().url(RANDOM_IMAGE_URL).build()
-
-            withContext(Dispatchers.IO) {
-                imageUri?.let { destinationUri ->
-                    httpClient.newCall(request).execute().body()?.use { responseBody ->
-
-                        getApplication<Application>().contentResolver.openOutputStream(
-                            destinationUri,
-                            "w"
-                        )?.use {
-                            responseBody.byteStream().copyTo(it)
-                            saveInPending = false
+            createPhotoOutput { output ->
+                output?.let {
+                    withContext(Dispatchers.IO) {
+                        try {
+                            httpClient.newCall(request).execute().body()?.use { responseBody ->
+                                responseBody.byteStream().copyTo(output)
+                                saveInPending = false
+                            }
+                            true
+                        } catch (e: Exception) {
+                            false
                         }
-
                     }
-                }
+                } ?: false
             }
         }
     }
 
-    suspend fun createPhotoUri(): Uri? {
-        return ShareMediaStoreUtil.createImageUri(
+    private suspend fun createPhotoOutput(callback: suspend (OutputStream?) -> Boolean) {
+        ShareMediaStoreUtil.createImageMedia(
             getApplication<Application>().contentResolver,
-            generateFileName("jpg")
+            generateFileName("jpg"),
+            "${Environment.DIRECTORY_PICTURES}/sample",
+            callback
         )
     }
 
     private fun generateFileName(extension: String): String {
-        return "${System.currentTimeMillis()}.$extension"
+        return "${
+            SimpleDateFormat(
+                "yyyyMMdd_HHmmss",
+                Locale.CHINESE
+            ).format(System.currentTimeMillis())
+        }.$extension"
     }
 }
 

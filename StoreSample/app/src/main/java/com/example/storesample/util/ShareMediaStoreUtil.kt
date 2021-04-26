@@ -9,12 +9,16 @@ import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.CancellationSignal
+import android.os.Environment
 import android.provider.MediaStore
+import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.annotation.RequiresPermission
 import androidx.annotation.WorkerThread
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import java.io.File
+import java.io.OutputStream
 
 /**
  * 可共享的媒体文件 （图片、音频、视频， 下载的文件）
@@ -25,15 +29,16 @@ object ShareMediaStoreUtil {
 
     @WorkerThread
     suspend fun <T> queryAllImages(resolver: ContentResolver, block: (cursor: Cursor) -> T): T? {
+        //TODO
         return queryMedia(
             resolver,
             MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
             null,
             null,
             null,
-            "${MediaStore.Images.Media.DISPLAY_NAME} ASC ",
+            "${MediaStore.Images.Media.DATE_ADDED} DESC",
             null,
-            2,
+            3,
             null,
             block
         )
@@ -96,12 +101,15 @@ object ShareMediaStoreUtil {
         withContext(Dispatchers.IO) {
 
             if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
+                val limitOrder = if (limit != null || offset != null) {
+                    "LIMIT ${limit ?: -1} ${offset?.let { "OFFSET $it" } ?: ""}"
+                } else ""
                 resolver.query(
                     uri,
                     projection,
                     selection,
                     selectionArgs,
-                    "$sortOrder ${limit?.let { "LIMIT $it" }} ${offset?.let { "OFFSET $it" }}",
+                    "$sortOrder  $limitOrder",
                     cancellationSignal
                 )?.use {
                     result = block(it)
@@ -152,74 +160,91 @@ object ShareMediaStoreUtil {
     }
 
 
-    suspend fun createImageUri(
+
+    suspend fun createImageMedia(
         contentResolver: ContentResolver,
-        mediaFileName: String
-    ): Uri? {
+        mediaFileName: String,
+        relativePath: String,
+        callback: suspend (output: OutputStream?) -> Boolean
+    ) {
         val imageCollection = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             MediaStore.Images.Media.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY)
         } else {
             MediaStore.Images.Media.EXTERNAL_CONTENT_URI
         }
-
-        return createMediaUri(
-            contentResolver,
-            imageCollection,
-            MediaStore.Images.Media.DISPLAY_NAME,
-            mediaFileName
-        )
+        createMedia(contentResolver, imageCollection, mediaFileName, relativePath, callback)
     }
 
-    suspend fun createAudioUri(
-        contentResolver: ContentResolver,
-        mediaFileName: String
-    ): Uri? {
-        val audioCollection = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            MediaStore.Audio.Media.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY)
-        } else {
-            MediaStore.Audio.Media.EXTERNAL_CONTENT_URI
-        }
 
-        return createMediaUri(
-            contentResolver,
-            audioCollection,
-            MediaStore.Audio.Media.DISPLAY_NAME,
-            mediaFileName
-        )
-    }
-
-    suspend fun createVideoUri(
-        contentResolver: ContentResolver,
-        mediaFileName: String
-    ): Uri? {
-        val videoCollection = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            MediaStore.Video.Media.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY)
-        } else {
-            MediaStore.Video.Media.EXTERNAL_CONTENT_URI
-        }
-
-        return createMediaUri(
-            contentResolver,
-            videoCollection,
-            MediaStore.Video.Media.DISPLAY_NAME,
-            mediaFileName
-        )
-    }
-
-    private suspend fun createMediaUri(
+    private suspend fun createMedia(
         contentResolver: ContentResolver,
         @RequiresPermission.Write mediaCollection: Uri,
-        mediaFileNameKey: String,
-        mediaFileName: String
-    ): Uri? {
-        return withContext(Dispatchers.IO) {
+        mediaFileName: String,
+        relativePath: String?,
+        callback: suspend (output: OutputStream?) -> Boolean
+    ) {
+        var isWriteByFile = false
+        var file: File? = null
+        var uri: Uri? = null
+
+        try {
             val newMedia = ContentValues().apply {
-                //TODO is_pending
-                put(mediaFileNameKey, mediaFileName)
+                put(MediaStore.MediaColumns.DISPLAY_NAME, mediaFileName)
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    relativePath?.let { put(MediaStore.MediaColumns.RELATIVE_PATH, it) }
+                    put(MediaStore.MediaColumns.IS_PENDING, true)
+                } else {
+                    relativePath?.let {
+                        isWriteByFile = true
+                        val parentFilePath =
+                            Environment.getExternalStorageDirectory().absolutePath + "/" + relativePath
+                        file = createMediaFile(parentFilePath, mediaFileName)
+                        put(MediaStore.MediaColumns.DATA, file!!.absolutePath)
+                    }
+                }
             }
-            return@withContext contentResolver.insert(mediaCollection, newMedia)
+
+            val outputStream = if (isWriteByFile) {
+                file?.outputStream()
+            } else {
+                contentResolver.insert(mediaCollection, newMedia)?.let { destinationUri ->
+                    uri = destinationUri
+                    contentResolver.openOutputStream(destinationUri, "w")
+                }
+            }
+
+            outputStream?.use { output ->
+                val result = callback(output)
+                file?.let {
+                    if (result) {
+                        contentResolver.insert(mediaCollection, newMedia)
+                    }
+                }
+                uri?.let {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                        newMedia.put(MediaStore.MediaColumns.IS_PENDING, false)
+                    }
+                    contentResolver.update(it, newMedia, null, null)
+                }
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
         }
     }
+
+    private fun createMediaFile(parentFilePath: String, mediaFileName: String): File {
+        return File(parentFilePath, mediaFileName).createFile()
+    }
+
+    private fun File.createFile(): File {
+        if (exists()) return this
+        parentFile?.takeIf { !it.exists() }?.mkdirs()
+        if (!exists()) {
+            createNewFile()
+        }
+        return this
+    }
+
 
     suspend fun deleteImageMedia(
         contentResolver: ContentResolver,

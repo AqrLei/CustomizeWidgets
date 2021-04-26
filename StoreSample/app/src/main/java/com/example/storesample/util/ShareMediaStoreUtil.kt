@@ -5,7 +5,6 @@ import android.content.ContentResolver
 import android.content.ContentValues
 import android.content.IntentSender
 import android.database.Cursor
-import android.database.DatabaseUtils
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
@@ -33,7 +32,8 @@ object ShareMediaStoreUtil {
             null,
             null,
             "${MediaStore.Images.Media.DISPLAY_NAME} ASC ",
-            "5 OFFSET 2",
+            null,
+            2,
             null,
             block
         )
@@ -44,6 +44,7 @@ object ShareMediaStoreUtil {
         return queryMedia(
             resolver,
             MediaStore.Video.Media.EXTERNAL_CONTENT_URI,
+            null,
             null,
             null,
             null,
@@ -66,10 +67,18 @@ object ShareMediaStoreUtil {
             null,
             null,
             null,
+            null,
             block
         )
     }
 
+    /**
+     * @param projection arrayOf(MediaStore.Video.Media._ID, MediaStore.Video.Media.DISPLAY_NAME)
+     * @param selection "${MediaStore.Video.Media.DURATION} >= ?"
+     * @param selectionArgs arrayOf(TimeUnit.MILLISECONDS.convert(5, TimeUnit.MINUTES).toString())
+     * @param limit
+     * @param offset
+     */
     @WorkerThread
     suspend fun <T> queryMedia(
         resolver: ContentResolver,
@@ -78,7 +87,8 @@ object ShareMediaStoreUtil {
         selection: String?,
         selectionArgs: Array<out String>?,
         sortOrder: String?,
-        limitOrder: String?,
+        limit: Int?,
+        offset: Int?,
         cancellationSignal: CancellationSignal?,
         block: (cursor: Cursor) -> T
     ): T? {
@@ -91,13 +101,14 @@ object ShareMediaStoreUtil {
                     projection,
                     selection,
                     selectionArgs,
-                    "$sortOrder $limitOrder",
+                    "$sortOrder ${limit?.let { "LIMIT $it" }} ${offset?.let { "OFFSET $it" }}",
                     cancellationSignal
                 )?.use {
                     result = block(it)
                 }
             } else {
-                val bundle = createSqlQueryBundle(selection, selectionArgs, sortOrder, limitOrder)
+                val bundle =
+                    createSqlQueryBundle(selection, selectionArgs, sortOrder, limit, offset)
                 resolver.query(uri, projection, bundle, cancellationSignal)?.use {
                     result = block(it)
                 }
@@ -112,9 +123,10 @@ object ShareMediaStoreUtil {
         selection: String?,
         selectionArgs: Array<out String>?,
         sortOrder: String?,
-        limitOrder: String?
+        limit: Int?,
+        offset: Int?
     ): Bundle? {
-        if (selection == null && selectionArgs == null && sortOrder == null && limitOrder == null) {
+        if (selection == null && selectionArgs == null && sortOrder == null && limit == null && offset == null) {
             return null
         }
         val queryArgs = Bundle()
@@ -128,10 +140,14 @@ object ShareMediaStoreUtil {
             queryArgs.putString(ContentResolver.QUERY_ARG_SQL_SORT_ORDER, sortOrder)
         }
 
-        ContentResolver.QUERY_ARG_SQL_HAVING
-        if (limitOrder != null) {
-            queryArgs.putString(ContentResolver.QUERY_ARG_SQL_LIMIT, limitOrder)
+        if (limit != null) {
+            queryArgs.putInt(ContentResolver.QUERY_ARG_LIMIT, limit)
         }
+
+        if (offset != null) {
+            queryArgs.putInt(ContentResolver.QUERY_ARG_OFFSET, offset)
+        }
+
         return queryArgs
     }
 

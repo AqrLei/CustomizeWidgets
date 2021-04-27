@@ -26,6 +26,7 @@ import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import java.io.File
+import java.io.InputStream
 import java.io.OutputStream
 import java.text.SimpleDateFormat
 import java.util.*
@@ -48,7 +49,10 @@ class MediaStoreCreateViewModel(application: Application) : AndroidViewModel(app
                     withContext(Dispatchers.IO) {
                         try {
                             httpClient.newCall(request).execute().body()?.use { responseBody ->
-                                responseBody.byteStream().copyTo(output)
+                                val totalLength = responseBody.contentLength()
+                                responseBody.byteStream().copyTo(output,{ bytesCopied ->  
+                                    Log.d("AqrLei","progress: ${bytesCopied}/$totalLength")
+                                })
                                 saveInPending = false
                             }
                             true
@@ -77,6 +81,19 @@ class MediaStoreCreateViewModel(application: Application) : AndroidViewModel(app
                 Locale.CHINESE
             ).format(System.currentTimeMillis())
         }.$extension"
+    }
+
+    private fun InputStream.copyTo(out: OutputStream, callback:(bytesCopied: Long) -> Unit, bufferSize: Int = DEFAULT_BUFFER_SIZE) {
+        var bytesCopied: Long = 0
+        val buffer = ByteArray(bufferSize)
+        var bytes = read(buffer)
+        
+        while (bytes >=0) {
+            out.write(buffer, 0, bytes)
+            bytesCopied += bytes
+            callback(bytesCopied)
+            bytes = read(buffer)
+        }
     }
 }
 

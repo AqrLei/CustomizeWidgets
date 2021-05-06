@@ -10,6 +10,7 @@ import android.support.v4.media.session.MediaSessionCompat
 import androidx.core.graphics.drawable.toBitmap
 import coil.imageLoader
 import coil.request.ImageRequest
+import com.example.mediaaudiosample.R
 import com.google.android.exoplayer2.Player
 import com.google.android.exoplayer2.ui.PlayerNotificationManager
 import kotlinx.coroutines.*
@@ -57,7 +58,7 @@ class AudioNotificationManager(
         notificationManager.setPlayer(null)
     }
 
-    fun showNotification(player: Player) {
+    fun showNotificationForPlayer(player: Player) {
         notificationManager.setPlayer(player)
     }
 
